@@ -49,14 +49,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/classes — 创建班级 (仅教师)
+// POST /api/classes — 创建班级 (教师和管理员)
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
 
-  // 只有教师可以创建班级，管理员通过后台管理学校/教师
-  if (session.role !== 'teacher') {
-    return NextResponse.json({ success: false, error: '仅教师可以创建班级' }, { status: 403 });
+  if (session.role !== 'teacher' && session.role !== 'admin') {
+    return NextResponse.json({ success: false, error: '仅教师和管理员可以创建班级' }, { status: 403 });
   }
 
   try {
