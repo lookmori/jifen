@@ -9,7 +9,7 @@ export async function PUT(
 ) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
-  if (session.role !== 'admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
+  if (session.role !== 'admin' && session.role !== 'super_admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
 
   const { id } = await params;
 
@@ -42,7 +42,7 @@ export async function DELETE(
 ) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
-  if (session.role !== 'admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
+  if (session.role !== 'admin' && session.role !== 'super_admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
 
   const { id } = await params;
 
@@ -66,7 +66,7 @@ export async function PATCH(
 ) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
-  if (session.role !== 'admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
+  if (session.role !== 'admin' && session.role !== 'super_admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
 
   const { id } = await params;
 

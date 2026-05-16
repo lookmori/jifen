@@ -15,19 +15,23 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * pageSize;
 
   try {
+    const schoolFilter = session.role === 'super_admin'
+      ? sql``
+      : sql`AND school_id = ${session.schoolId}`;
+
     let countResult;
     let gifts;
     if (search) {
       const searchPattern = `%${search}%`;
       countResult = await sql`
         SELECT COUNT(*)::int as total FROM gifts
-        WHERE school_id = ${session.schoolId}
+        WHERE TRUE ${schoolFilter}
           ${showInactive ? sql`` : sql`AND is_active = true`}
           AND name ILIKE ${searchPattern}
       `;
       gifts = await sql`
         SELECT * FROM gifts
-        WHERE school_id = ${session.schoolId}
+        WHERE TRUE ${schoolFilter}
           ${showInactive ? sql`` : sql`AND is_active = true`}
           AND name ILIKE ${searchPattern}
         ORDER BY points_price ASC
@@ -36,12 +40,12 @@ export async function GET(request: NextRequest) {
     } else {
       countResult = await sql`
         SELECT COUNT(*)::int as total FROM gifts
-        WHERE school_id = ${session.schoolId}
+        WHERE TRUE ${schoolFilter}
           ${showInactive ? sql`` : sql`AND is_active = true`}
       `;
       gifts = await sql`
         SELECT * FROM gifts
-        WHERE school_id = ${session.schoolId}
+        WHERE TRUE ${schoolFilter}
           ${showInactive ? sql`` : sql`AND is_active = true`}
         ORDER BY points_price ASC
         LIMIT ${pageSize} OFFSET ${offset}
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
-  if (session.role !== 'admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
+  if (session.role !== 'admin' && session.role !== 'super_admin') return NextResponse.json({ success: false, error: '仅管理员可操作' }, { status: 403 });
 
   try {
     const { name, description, imageUrl, pointsPrice, stock, emoji } = await request.json();

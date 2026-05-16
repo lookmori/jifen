@@ -5,7 +5,7 @@ import { getSession } from '@/lib/auth';
 // GET /api/admin/schools — 分页+搜索学校列表
 export async function GET(request: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  if (!session || (session.role !== 'admin' && session.role !== 'super_admin')) {
     return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
   }
 
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const searchPattern = search ? `%${search}%` : '';
 
     // 非超级管理员只能看到自己所在的学校
-    const isSuperAdmin = session.phone === 'admin';
+    const isSuperAdmin = session.role === 'super_admin';
     const schoolFilter = isSuperAdmin
       ? sql`(${search} = '' OR s.name ILIKE ${searchPattern})`
       : sql`(s.id = ${session.schoolId} AND (${search} = '' OR s.name ILIKE ${searchPattern}))`;
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/schools — 创建学校（仅超级管理员）
 export async function POST(request: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== 'admin' || session.phone !== 'admin') {
+  if (!session || session.role !== 'super_admin') {
     return NextResponse.json({ success: false, error: '仅超级管理员可创建学校' }, { status: 403 });
   }
 

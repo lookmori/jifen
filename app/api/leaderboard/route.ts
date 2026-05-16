@@ -13,7 +13,25 @@ export async function GET(request: NextRequest) {
 
   try {
     // 管理员看全校学生排行榜，教师只看自己班级的学生
-    if (session.role === 'admin') {
+    if (session.role === 'admin' || session.role === 'super_admin') {
+      const schoolScope = session.role === 'super_admin'
+        ? sql``
+        : sql`WHERE c.teacher_id IN (SELECT id FROM teachers WHERE school_id = ${session.schoolId})`;
+
+      if (session.role === 'super_admin') {
+        const students = await sql`
+          SELECT s.id, s.name, s.points, s.avatar_emoji, c.name as class_name
+          FROM students s
+          JOIN classes c ON s.class_id = c.id
+          ORDER BY s.points DESC
+          LIMIT ${limit}
+        `;
+        const classes = await sql`
+          SELECT id, name FROM classes ORDER BY name
+        `;
+        return NextResponse.json({ success: true, data: students, classes });
+      }
+
       const students = await sql`
         SELECT s.id, s.name, s.points, s.avatar_emoji, c.name as class_name
         FROM students s

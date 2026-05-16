@@ -15,7 +15,7 @@ SELECT
   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
   '超级管理员',
   (SELECT id FROM schools WHERE name = '默认学校' LIMIT 1),
-  'admin',
+  'super_admin',
   TRUE,
   '👑'
 WHERE EXISTS (SELECT 1 FROM schools WHERE name = '默认学校');

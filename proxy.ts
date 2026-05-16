@@ -38,7 +38,7 @@ export async function proxy(request: NextRequest) {
     const role = payload.role as string;
 
     // 管理员路由保护
-    if (adminPaths.some(p => pathname.startsWith(p)) && role !== 'admin') {
+    if (adminPaths.some(p => pathname.startsWith(p)) && role !== 'admin' && role !== 'super_admin') {
       if (pathname.startsWith('/api/')) {
         return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
       }

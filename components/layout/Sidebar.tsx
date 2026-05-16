@@ -23,7 +23,7 @@ const adminItems = [
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
   const { session } = useAuth();
-  const isAdmin = session?.role === 'admin';
+  const isAdmin = session?.role === 'admin' || session?.role === 'super_admin';
 
   return (
     <motion.aside

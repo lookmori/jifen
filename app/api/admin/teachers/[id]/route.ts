@@ -9,7 +9,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  if (!session || (session.role !== 'admin' && session.role !== 'super_admin')) {
     return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
   }
 
@@ -36,7 +36,7 @@ export async function PUT(
     }
 
     // 非超级管理员只能编辑自己学校的教师，且不能跨学校转移
-    if (session.phone !== 'admin') {
+    if (session.role !== 'super_admin') {
       if (current.school_id !== session.schoolId) {
         return NextResponse.json({ success: false, error: '无权编辑其他学校的教师' }, { status: 403 });
       }
@@ -88,7 +88,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  if (!session || (session.role !== 'admin' && session.role !== 'super_admin')) {
     return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
   }
 

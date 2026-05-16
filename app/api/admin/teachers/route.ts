@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 // GET /api/admin/teachers — 分页+搜索教师列表
 export async function GET(request: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  if (!session || (session.role !== 'admin' && session.role !== 'super_admin')) {
     return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
   }
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const offset = (page - 1) * pageSize;
 
   try {
-    const isSuperAdmin = session.phone === 'admin';
+    const isSuperAdmin = session.role === 'super_admin';
 
     // 动态构建 WHERE 条件
     const conditions = [sql`t.phone != 'admin'`];
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/teachers — 创建教师
 export async function POST(request: NextRequest) {
   const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  if (!session || (session.role !== 'admin' && session.role !== 'super_admin')) {
     return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
   }
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const { name, phone, schoolId, role = 'teacher', password = '123456' } = await request.json();
 
     // 非超级管理员只能在自己学校创建教师
-    if (session.phone !== 'admin' && schoolId !== session.schoolId) {
+    if (session.role !== 'super_admin' && schoolId !== session.schoolId) {
       return NextResponse.json({ success: false, error: '只能在自己学校创建教师' }, { status: 403 });
     }
 

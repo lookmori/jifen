@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 校验班级是否归当前教师管辖
-    if (session.role !== 'admin') {
+    if (session.role === 'teacher') {
       const classOwner = await sql`
         SELECT 1 FROM classes WHERE id = ${classId} AND teacher_id = ${session.teacherId} LIMIT 1
       `;
@@ -49,9 +49,11 @@ export async function GET(request: NextRequest) {
     const searchPattern = search ? `%${search}%` : '';
 
     // 教师只看自己班级的学生，管理员看全校学生
-    const scopeFilter = session.role === 'admin'
-      ? sql`AND c.teacher_id IN (SELECT id FROM teachers WHERE school_id = ${session.schoolId})`
-      : sql`AND c.teacher_id = ${session.teacherId}`;
+    const scopeFilter = session.role === 'super_admin'
+      ? sql``
+      : session.role === 'admin'
+        ? sql`AND c.teacher_id IN (SELECT id FROM teachers WHERE school_id = ${session.schoolId})`
+        : sql`AND c.teacher_id = ${session.teacherId}`;
 
     const students = await sql`
       SELECT s.*, c.name as class_name FROM students s

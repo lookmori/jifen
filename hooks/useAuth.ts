@@ -52,5 +52,5 @@ export function useAuth() {
     window.location.href = '/login';
   }, []);
 
-  return { session, loading, login, logout, isAdmin: session?.role === 'admin' };
+  return { session, loading, login, logout, isAdmin: session?.role === 'admin' || session?.role === 'super_admin' };
 }

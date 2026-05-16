@@ -16,9 +16,11 @@ export async function GET(request: NextRequest) {
   try {
     const searchPattern = search ? `%${search}%` : '';
     // 教师只看自己的班级，管理员看所属学校的所有班级
-    const ownerFilter = session.role === 'admin'
-      ? sql`AND c.teacher_id IN (SELECT id FROM teachers WHERE school_id = ${session.schoolId})`
-      : sql`AND c.teacher_id = ${session.teacherId}`;
+    const ownerFilter = session.role === 'super_admin'
+      ? sql``
+      : session.role === 'admin'
+        ? sql`AND c.teacher_id IN (SELECT id FROM teachers WHERE school_id = ${session.schoolId})`
+        : sql`AND c.teacher_id = ${session.teacherId}`;
 
     const countResult = await sql`
       SELECT COUNT(*)::int as total FROM classes c
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
 
-  if (session.role !== 'teacher' && session.role !== 'admin') {
+  if (session.role !== 'teacher' && session.role !== 'admin' && session.role !== 'super_admin') {
     return NextResponse.json({ success: false, error: '仅教师和管理员可以创建班级' }, { status: 403 });
   }
 

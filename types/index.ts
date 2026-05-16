@@ -12,7 +12,7 @@ export interface School {
   created_at: string;
 }
 
-export type UserRole = 'admin' | 'teacher';
+export type UserRole = 'super_admin' | 'admin' | 'teacher';
 
 export interface Teacher {
   id: string;

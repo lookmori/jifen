@@ -14,8 +14,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (recordType === 'exchange') {
-      // 校验权限：兑换记录的学生必须属于当前教师的班级
-      if (session.role !== 'admin') {
+      // 校验权限：管理员和超级管理员可删除任意记录，教师只能删除自己班级的
+      if (session.role === 'teacher') {
         const [ownership] = await sql`
           SELECT 1 FROM exchange_records er
           JOIN students s ON er.student_id = s.id
@@ -28,7 +28,7 @@ export async function DELETE(request: NextRequest) {
       await sql`DELETE FROM exchange_records WHERE id = ${id}`;
     } else {
       // point record: 'add' 或 'deduct'
-      if (session.role !== 'admin') {
+      if (session.role === 'teacher') {
         const [ownership] = await sql`
           SELECT 1 FROM point_records pr
           JOIN students s ON pr.student_id = s.id
@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
 
   try {
     // 获取可查看的学生ID范围：管理员看全校，教师只看自己班级
-    const classStudents = session.role === 'admin'
+    const classStudents = session.role === 'super_admin'
+      ? await sql`SELECT id FROM students s` as { id: string }[]
+      : session.role === 'admin'
       ? await sql`
           SELECT s.id FROM students s
           JOIN classes c ON s.class_id = c.id

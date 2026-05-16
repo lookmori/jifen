@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS teachers (
   password_hash VARCHAR(255) NOT NULL,
   name VARCHAR(50) NOT NULL,
   school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
-  role VARCHAR(20) DEFAULT 'teacher' CHECK (role IN ('admin', 'teacher')),
+  role VARCHAR(20) DEFAULT 'teacher' CHECK (role IN ('super_admin', 'admin', 'teacher')),
   is_active BOOLEAN DEFAULT TRUE,
   avatar_emoji VARCHAR(10) DEFAULT '🧑‍🏫',
   created_at TIMESTAMPTZ DEFAULT NOW()

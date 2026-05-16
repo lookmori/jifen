@@ -19,7 +19,7 @@ import type { Teacher, School, Pagination as PaginationType } from '@/types';
 
 export default function AdminTeachersPage() {
   const { session } = useAuth();
-  const isSuperAdmin = session?.phone === 'admin';
+  const isSuperAdmin = session?.role === 'super_admin';
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [pagination, setPagination] = useState<PaginationType | null>(null);

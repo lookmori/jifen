@@ -44,7 +44,7 @@ export function Header({ collapsed, onToggleSidebar }: HeaderProps) {
             <span className="text-sm text-[var(--color-text-secondary)] hidden md:block">
               {greeting}
             </span>
-            <span className="text-2xl">{session.role === 'admin' ? '👑' : '🧑‍🏫'}</span>
+            <span className="text-2xl">{session.role === 'super_admin' ? '👑' : session.role === 'admin' ? '👑' : '🧑‍🏫'}</span>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={logout}

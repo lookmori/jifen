@@ -21,7 +21,7 @@ export async function GET(
 
   try {
     // 校验班级是否归当前教师管辖
-    if (session.role !== 'admin') {
+    if (session.role === 'teacher') {
       const classOwner = await sql`
         SELECT 1 FROM classes WHERE id = ${classId} AND teacher_id = ${session.teacherId} LIMIT 1
       `;

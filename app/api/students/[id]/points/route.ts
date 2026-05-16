@@ -24,7 +24,7 @@ export async function POST(
     }
 
     // 校验学生所属班级是否归当前教师管辖
-    if (session.role !== 'admin') {
+    if (session.role === 'teacher') {
       const ownership = await sql`
         SELECT 1 FROM students s
         JOIN classes c ON s.class_id = c.id
@@ -74,7 +74,7 @@ export async function GET(
 
   try {
     // 校验学生所属班级是否归当前教师管辖
-    if (session.role !== 'admin') {
+    if (session.role === 'teacher') {
       const ownership = await sql`
         SELECT 1 FROM students s
         JOIN classes c ON s.class_id = c.id

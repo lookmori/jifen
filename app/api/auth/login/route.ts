@@ -11,7 +11,7 @@ async function doLogin(teacher: Record<string, any>) {
   const token = await signToken({
     teacherId: teacher.id,
     schoolId: teacher.school_id,
-    role: teacher.role as 'admin' | 'teacher',
+    role: teacher.role as 'super_admin' | 'admin' | 'teacher',
     name: teacher.name,
     phone: teacher.phone,
   });
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       let [admin] = await sql`
         SELECT t.id, t.phone, t.name, t.school_id, t.role, t.is_active, t.avatar_emoji
         FROM teachers t
-        WHERE t.phone = ${phone} AND t.role = 'admin'
+        WHERE t.phone = ${phone} AND t.role = 'super_admin'
         LIMIT 1
       `;
 
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         const passwordHash = await bcrypt.hash(password, 10);
         [admin] = await sql`
           INSERT INTO teachers (name, phone, password_hash, school_id, role)
-          VALUES ('超级管理员', ${phone}, ${passwordHash}, ${school.id}, 'admin')
+          VALUES ('超级管理员', ${phone}, ${passwordHash}, ${school.id}, 'super_admin')
           RETURNING id, phone, name, school_id, role, is_active, avatar_emoji
         `;
 

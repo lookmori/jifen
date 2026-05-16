@@ -70,7 +70,7 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-2xl font-display font-bold text-[var(--color-text)]">{greeting}</h1>
         <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-          {session?.role === 'admin' ? '👑 管理员模式' : '🧑‍🏫 教师模式'}
+          {session?.role === 'super_admin' ? '👑 超级管理员模式' : session?.role === 'admin' ? '🏫 学校管理员模式' : '🧑‍🏫 教师模式'}
         </p>
       </motion.div>
 
@@ -109,7 +109,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {session?.role === 'admin' && (
+      {(session?.role === 'admin' || session?.role === 'super_admin') && (
         <div>
           <h2 className="text-lg font-display font-bold text-[var(--color-text)] mb-4">管理员功能</h2>
           <div className="grid grid-cols-2 gap-3">
