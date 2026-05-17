@@ -55,8 +55,10 @@ export async function POST() {
       points_change INT NOT NULL,
       reason VARCHAR(200) NOT NULL,
       type VARCHAR(10) NOT NULL CHECK (type IN ('add', 'deduct')),
+      image_url VARCHAR(500),
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`;
+    await sql`ALTER TABLE point_records ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)`;
 
     await sql`CREATE TABLE IF NOT EXISTS gifts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

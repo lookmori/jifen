@@ -18,6 +18,8 @@ import { triggerPetHappy, triggerPetSad } from '@/components/layout/PixelPet';
 import { fireConfetti, fireMilestone, checkMilestone } from '@/lib/confetti';
 import { playPointAdd, playPointDeduct, playMilestone } from '@/lib/sounds';
 import { parseExcelFile } from '@/lib/excel';
+import { MomentImageUpload } from '@/components/students/MomentImageUpload';
+import { HighlightMomentsPDF } from '@/components/export/HighlightMomentsPDF';
 import Link from 'next/link';
 import type { Pagination as PaginationType } from '@/types';
 
@@ -51,12 +53,21 @@ export default function ClassDetailPage() {
   const [pointAmount, setPointAmount] = useState(5);
   const [pointReason, setPointReason] = useState('');
   const [pointCustomReason, setPointCustomReason] = useState('');
+  const [pointImageUrl, setPointImageUrl] = useState('');
 
   const [showImport, setShowImport] = useState(false);
   const [importText, setImportText] = useState('');
   const [importingFile, setImportingFile] = useState(false);
 
   const [deleteTarget, setDeleteTarget] = useState<StudentItem | null>(null);
+  const [momentsData, setMomentsData] = useState<{
+    class: { id: string; name: string; teacher_name: string };
+    students: Array<{
+      id: string; name: string; points: number; avatar_emoji: string;
+      moments: Array<{ id: string; points_change: number; reason: string; type: string; image_url: string; teacher_name: string; created_at: string }>;
+    }>;
+  } | null>(null);
+  const [exportReady, setExportReady] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -104,6 +115,25 @@ export default function ClassDetailPage() {
 
   useEffect(() => { fetchStudents(); }, [fetchStudents]);
 
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`/api/classes/${classId}/moments`);
+      const data = await res.json();
+      if (data.success) {
+        if (data.data.students.length === 0) {
+          toast('该班级暂无精彩瞬间', 'info');
+          return;
+        }
+        setMomentsData(data.data);
+        setExportReady(true);
+      } else {
+        toast(data.error || '获取精彩瞬间失败', 'error');
+      }
+    } catch {
+      toast('获取精彩瞬间失败', 'error');
+    }
+  };
+
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentName.trim()) return;
@@ -130,7 +160,7 @@ export default function ClassDetailPage() {
     try {
       const res = await fetch(`/api/students/${selectedStudent!.id}/points`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pointsChange: pointAmount, reason, type: pointType }),
+        body: JSON.stringify({ pointsChange: pointAmount, reason, type: pointType, imageUrl: pointImageUrl || undefined }),
       });
       const data = await res.json();
       if (data.success) {
@@ -189,6 +219,9 @@ export default function ClassDetailPage() {
           <h1 className="text-2xl font-display font-bold text-[var(--color-text)]">📚 班级详情</h1>
         </div>
         <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={handleExport} className="gap-1.5 font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10">
+            📸 导出全班精彩瞬间
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => { setImportText(''); setShowImport(true); }}>📥 批量导入</Button>
           <Button variant="primary" size="sm" onClick={() => { setStudentName(''); setShowStudentForm(true); }}>+ 添加学生</Button>
         </div>
@@ -228,11 +261,11 @@ export default function ClassDetailPage() {
                     <div className="flex gap-2">
                       <Button variant="success" size="sm" className="flex-1" onClick={() => {
                         setSelectedStudent(s); setPointType('add'); setPointAmount(5);
-                        setPointReason(''); setPointCustomReason(''); setShowPointModal(true);
+                        setPointReason(''); setPointCustomReason(''); setPointImageUrl(''); setShowPointModal(true);
                       }}>＋ 加分</Button>
                       <Button variant="danger" size="sm" className="flex-1" onClick={() => {
                         setSelectedStudent(s); setPointType('deduct'); setPointAmount(3);
-                        setPointReason(''); setPointCustomReason(''); setShowPointModal(true);
+                        setPointReason(''); setPointCustomReason(''); setPointImageUrl(''); setShowPointModal(true);
                       }}>− 扣分</Button>
                     </div>
                     <div className="flex gap-2 mt-2">
@@ -306,6 +339,14 @@ export default function ClassDetailPage() {
             <Input value={pointCustomReason} onChange={e => setPointCustomReason(e.target.value)} placeholder="输入自定义原因..." />
           </div>
 
+          {pointType === 'add' && (
+            <MomentImageUpload
+              imageUrl={pointImageUrl}
+              onUploaded={setPointImageUrl}
+              onRemove={() => setPointImageUrl('')}
+            />
+          )}
+
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" onClick={() => setShowPointModal(false)}>取消</Button>
             <Button variant={pointType === 'add' ? 'success' : 'danger'} onClick={handleAdjustPoints} disabled={submitting}>
@@ -353,6 +394,15 @@ export default function ClassDetailPage() {
         onClose={() => setDeleteTarget(null)}
         loading={submitting}
       />
+
+      {momentsData && (
+        <HighlightMomentsPDF
+          classInfo={momentsData.class}
+          students={momentsData.students}
+          autoGenerate={exportReady}
+          onGenerated={() => { setExportReady(false); setMomentsData(null); }}
+        />
+      )}
     </div>
   );
 }

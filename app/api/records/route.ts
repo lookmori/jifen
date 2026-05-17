@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { deleteImage } from '@/lib/blob';
 
 // DELETE /api/records — 删除积分记录或兑换记录
 export async function DELETE(request: NextRequest) {
@@ -38,7 +39,15 @@ export async function DELETE(request: NextRequest) {
         `;
         if (!ownership) return NextResponse.json({ success: false, error: '无权限删除该记录' }, { status: 403 });
       }
+      // 删除前取到图片 URL
+      const [record] = await sql`
+        SELECT image_url FROM point_records WHERE id = ${id}
+      ` as { image_url: string | null }[];
       await sql`DELETE FROM point_records WHERE id = ${id}`;
+      // 异步清理图片文件
+      if (record?.image_url) {
+        deleteImage(record.image_url).catch(() => {});
+      }
     }
 
     return NextResponse.json({ success: true });

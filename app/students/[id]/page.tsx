@@ -16,6 +16,8 @@ import { toast } from '@/components/ui/Toast';
 import { triggerPetHappy, triggerPetSad } from '@/components/layout/PixelPet';
 import { fireConfetti, fireMilestone, checkMilestone } from '@/lib/confetti';
 import { playPointAdd, playPointDeduct, playMilestone } from '@/lib/sounds';
+import { MomentImageUpload } from '@/components/students/MomentImageUpload';
+import { HighlightMomentsPDF } from '@/components/export/HighlightMomentsPDF';
 import type { Pagination as PaginationType } from '@/types';
 
 interface StudentInfo {
@@ -53,9 +55,18 @@ export default function StudentDetailPage() {
   const [pointAmount, setPointAmount] = useState(5);
   const [pointReason, setPointReason] = useState('');
   const [pointCustomReason, setPointCustomReason] = useState('');
+  const [pointImageUrl, setPointImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PointRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [momentsData, setMomentsData] = useState<{
+    class: { id: string; name: string; teacher_name: string };
+    students: Array<{
+      id: string; name: string; points: number; avatar_emoji: string;
+      moments: Array<{ id: string; points_change: number; reason: string; type: string; image_url: string; teacher_name: string; created_at: string }>;
+    }>;
+  } | null>(null);
+  const [exportReady, setExportReady] = useState(false);
 
   const defaultPresets = {
     add: ['积极回答问题', '作业完成优秀', '帮助同学', '课堂纪律好', '考试成绩进步', '主动打扫卫生'],
@@ -125,7 +136,7 @@ export default function StudentDetailPage() {
     try {
       const res = await fetch(`/api/students/${studentId}/points`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pointsChange: pointAmount, reason, type: pointType }),
+        body: JSON.stringify({ pointsChange: pointAmount, reason, type: pointType, imageUrl: pointImageUrl || undefined }),
       });
       const data = await res.json();
       if (data.success) {
@@ -146,6 +157,26 @@ export default function StudentDetailPage() {
       } else toast(data.error || '操作失败', 'error');
     } catch { toast('操作失败', 'error'); }
     finally { setSubmitting(false); }
+  };
+
+  const handleExport = async () => {
+    if (!student) return;
+    try {
+      const res = await fetch(`/api/classes/${student.class_id}/moments?studentId=${studentId}`);
+      const data = await res.json();
+      if (data.success) {
+        if (data.data.students.length === 0) {
+          toast('该学生暂无精彩瞬间', 'info');
+          return;
+        }
+        setMomentsData(data.data);
+        setExportReady(true);
+      } else {
+        toast(data.error || '获取精彩瞬间失败', 'error');
+      }
+    } catch {
+      toast('获取精彩瞬间失败', 'error');
+    }
   };
 
   const formatTime = (dateStr: string) => {
@@ -192,11 +223,14 @@ export default function StudentDetailPage() {
             </div>
             <div className="flex gap-2">
               <Button variant="success" size="sm" onClick={() => {
-                setPointType('add'); setPointAmount(5); setPointReason(''); setPointCustomReason(''); setShowPointModal(true);
+                setPointType('add'); setPointAmount(5); setPointReason(''); setPointCustomReason(''); setPointImageUrl(''); setShowPointModal(true);
               }}>＋ 加分</Button>
               <Button variant="danger" size="sm" onClick={() => {
-                setPointType('deduct'); setPointAmount(3); setPointReason(''); setPointCustomReason(''); setShowPointModal(true);
+                setPointType('deduct'); setPointAmount(3); setPointReason(''); setPointCustomReason(''); setPointImageUrl(''); setShowPointModal(true);
               }}>− 扣分</Button>
+              <Button variant="ghost" size="sm" onClick={handleExport} className="gap-1 font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10">
+                📸 导出精彩瞬间
+              </Button>
             </div>
           </div>
         </Card>
@@ -263,6 +297,15 @@ export default function StudentDetailPage() {
         loading={deleting}
       />
 
+      {momentsData && (
+        <HighlightMomentsPDF
+          classInfo={momentsData.class}
+          students={momentsData.students}
+          autoGenerate={exportReady}
+          onGenerated={() => { setExportReady(false); setMomentsData(null); }}
+        />
+      )}
+
       <Modal open={showPointModal} onClose={() => setShowPointModal(false)} title={`✨ 调整${student.name}积分`}>
         <div className="space-y-4">
           <p className="text-center text-sm text-[var(--color-text-secondary)]">
@@ -306,6 +349,14 @@ export default function StudentDetailPage() {
             <label className="text-sm font-bold text-[var(--color-text-secondary)] mb-1.5 block">或自定义原因</label>
             <Input value={pointCustomReason} onChange={e => setPointCustomReason(e.target.value)} placeholder="输入自定义原因..." />
           </div>
+
+          {pointType === 'add' && (
+            <MomentImageUpload
+              imageUrl={pointImageUrl}
+              onUploaded={setPointImageUrl}
+              onRemove={() => setPointImageUrl('')}
+            />
+          )}
 
           <div className="flex gap-3 justify-end">
             <Button variant="ghost" onClick={() => setShowPointModal(false)}>取消</Button>

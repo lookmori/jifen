@@ -65,6 +65,7 @@ export interface PointRecord {
   points_change: number;
   reason: string;
   type: 'add' | 'deduct';
+  image_url?: string | null;
   created_at: string;
 }
 

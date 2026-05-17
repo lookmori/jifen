@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS point_records (
   points_change INT NOT NULL,
   reason VARCHAR(200) NOT NULL,
   type VARCHAR(10) NOT NULL CHECK (type IN ('add', 'deduct')),
+  image_url VARCHAR(500),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { deleteImage } from '@/lib/blob';
 
 // DELETE /api/students/[id] — 删除学生
 export async function DELETE(
@@ -13,12 +14,22 @@ export async function DELETE(
   const { id: studentId } = await params;
 
   try {
+    // 先收集该学生的所有图片 URL，级联删除前清理存储
+    const imageRecords = await sql`
+      SELECT image_url FROM point_records
+      WHERE student_id = ${studentId} AND image_url IS NOT NULL
+    ` as { image_url: string }[];
+
     const result = await sql`
       DELETE FROM students WHERE id = ${studentId}
       AND class_id IN (SELECT id FROM classes WHERE teacher_id = ${session.teacherId})
       RETURNING id
     `;
     if (result.length === 0) return NextResponse.json({ success: false, error: '学生不存在或无权限' }, { status: 404 });
+
+    // 异步清理图片文件（不阻塞响应）
+    Promise.all(imageRecords.map(r => deleteImage(r.image_url).catch(() => {})));
+
     return NextResponse.json({ success: true, data: { id: result[0].id } });
   } catch (error) {
     console.error('DELETE student error:', error);

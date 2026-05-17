@@ -13,7 +13,7 @@ export async function POST(
   const { id: studentId } = await params;
 
   try {
-    const { pointsChange, reason, type } = await request.json();
+    const { pointsChange, reason, type, imageUrl } = await request.json();
 
     if (!pointsChange || pointsChange <= 0 || !reason || !type) {
       return NextResponse.json({ success: false, error: '参数不完整' }, { status: 400 });
@@ -40,8 +40,8 @@ export async function POST(
 
     // 事务：写记录 + 更新积分
     const [record] = await sql`
-      INSERT INTO point_records (student_id, teacher_id, points_change, reason, type)
-      VALUES (${studentId}, ${session.teacherId}, ${actualChange}, ${reason}, ${type})
+      INSERT INTO point_records (student_id, teacher_id, points_change, reason, type, image_url)
+      VALUES (${studentId}, ${session.teacherId}, ${actualChange}, ${reason}, ${type}, ${imageUrl || null})
       RETURNING *
     `;
 

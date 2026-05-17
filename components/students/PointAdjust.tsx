@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from '@/components/ui/Toast';
 import { Minus, Plus } from 'lucide-react';
+import { MomentImageUpload } from './MomentImageUpload';
 
 interface ReasonPreset {
   id: string;
@@ -24,7 +25,7 @@ interface PointAdjustProps {
   open: boolean;
   student: StudentItem | null;
   onClose: () => void;
-  onSubmit: (studentId: string, points: number, reason: string, type: 'add' | 'deduct') => Promise<void>;
+  onSubmit: (studentId: string, points: number, reason: string, type: 'add' | 'deduct', imageUrl?: string) => Promise<void>;
   presets: ReasonPreset[];
 }
 
@@ -33,6 +34,7 @@ export function PointAdjust({ open, student, onClose, onSubmit, presets }: Point
   const [points, setPoints] = useState(1);
   const [reason, setReason] = useState('');
   const [customReason, setCustomReason] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const filteredPresets = presets.filter(p => p.type === type);
@@ -43,6 +45,7 @@ export function PointAdjust({ open, student, onClose, onSubmit, presets }: Point
       setPoints(1);
       setReason('');
       setCustomReason('');
+      setImageUrl('');
     }
   }, [open]);
 
@@ -54,7 +57,7 @@ export function PointAdjust({ open, student, onClose, onSubmit, presets }: Point
   const handleSubmit = async () => {
     if (!canSubmit) { toast('请选择或输入原因', 'error'); return; }
     setSubmitting(true);
-    await onSubmit(student.id, points, finalReason, type);
+    await onSubmit(student.id, points, finalReason, type, imageUrl || undefined);
     setSubmitting(false);
     onClose();
   };
@@ -151,6 +154,14 @@ export function PointAdjust({ open, student, onClose, onSubmit, presets }: Point
             placeholder="或自定义原因..."
           />
         </div>
+
+        {type === 'add' && (
+          <MomentImageUpload
+            imageUrl={imageUrl}
+            onUploaded={setImageUrl}
+            onRemove={() => setImageUrl('')}
+          />
+        )}
 
         <Button onClick={handleSubmit} disabled={!canSubmit} className="w-full" size="lg">
           {submitting ? '调整中...' : '✨ 确认调整'}

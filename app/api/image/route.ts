@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'content-type': contentType,
         'cache-control': 'public, max-age=86400',
+        'access-control-allow-origin': '*',
       },
     });
   } catch {
